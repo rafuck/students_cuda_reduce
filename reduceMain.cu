@@ -9,6 +9,7 @@
 #include "cudaErrorHadling.h"
 
 float reduce(float *data, int32_t n);
+float reduce1(float *data, int32_t n);
 void initForPi(float *data, int32_t n);
 
 const char * const printMemorySize(size_t bytes){
@@ -93,7 +94,7 @@ int main(int argc, char *argv[]){
     //------------- Variables -----------
         int n = 1024*1024*8;
         cudaEvent_t start, stop;
-        float timeGPU = 0.0;
+        float timeGPU1 = 0.0, timeGPU2 = 0.0, timeGPU3 = 0.0;
 
         size_t nb = n*sizeof(float);
         float *aDev  = NULL;
@@ -112,7 +113,7 @@ int main(int argc, char *argv[]){
     //-------- Select device -----------
         int device = selectCUDADevice();  
         if(device == -1) {
-            std::cout << "Can not find suitable device" << std::endl;
+            std::cout << "Can not find suitable device" << "\n";
             return EXIT_FAILURE;
         }
         SAFE_CALL(cudaSetDevice(device));
@@ -131,18 +132,30 @@ int main(int argc, char *argv[]){
     //------ Calculation on GPU first way --------------
         SAFE_CALL( cudaEventRecord(start, 0) );
 
-        float sum = reduce(aDev, n);
+        float sum1 = reduce1(aDev, n);
 
         SAFE_CALL( cudaEventRecord(stop, 0) );
         SAFE_CALL( cudaEventSynchronize(stop) );
-        SAFE_CALL( cudaEventElapsedTime(&timeGPU, start, stop) );      
+        SAFE_CALL( cudaEventElapsedTime(&timeGPU1, start, stop) );      
     //--------------------------------------
 
-    double pi = sum/n;
-    printf("~Pi = %e\tpi - ~Pi = %e\n", pi, M_PI-pi);
-    printf("Processing time on GPU: %4.8f s\n", timeGPU/1000.0);
+    //------ Calculation on GPU second way --------------
+        SAFE_CALL( cudaEventRecord(start, 0) );
 
-    getchar();
+        float sum2 = reduce(aDev, n);
+
+        SAFE_CALL( cudaEventRecord(stop, 0) );
+        SAFE_CALL( cudaEventSynchronize(stop) );
+        SAFE_CALL( cudaEventElapsedTime(&timeGPU2, start, stop) );      
+    //--------------------------------------
+
+    double pi1 = sum1/n;
+    double pi2 = sum2/n;
+    printf("Pi1 = %e\tpi - Pi1 = %e\n", pi1, M_PI-pi1);
+    printf("Pi2 = %e\tpi - Pi2 = %e\n", pi2, M_PI-pi2);
+    printf("1. Processing time on GPU: %4.8f s\n", timeGPU1/1000.0);
+    printf("2. Processing time on GPU: %4.8f s\n", timeGPU2/1000.0);
+
     
     return EXIT_SUCCESS;
 }
