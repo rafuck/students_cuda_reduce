@@ -2,6 +2,15 @@
 #include "cudaErrorHadling.h"
 #define BLOCK_SIZE 512
 
+/*
+   #include <curand.h>
+   curandGenerator_t prng;
+   curandCreateGenerator(&prng, CURAND_RNG_PSEUDO_DEFAULT);
+   curandSetPseudoRandomGeneratorSeed(prng, time(NULL));
+   curandGenerateUniform(prng, y, n);
+   curandDestroyGenerator(prng);
+*/
+
 __global__ void initKernel(float *f, int32_t n){
 	int32_t i = blockIdx.x*blockDim.x + threadIdx.x;
 	if (i < n){
